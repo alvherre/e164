@@ -4,6 +4,7 @@ SET search_path = public;
 \set ECHO none
 \i e164.sql
 \set ECHO all
+\set VERBOSITY terse
 
 SET SEARCH_PATH to public, e164;
 

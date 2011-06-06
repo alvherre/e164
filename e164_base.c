@@ -477,10 +477,10 @@ static const E164Type e164TypeFor[] = {
 E164 e164In (char * theString);
 char * e164Out (E164 aNumber);
 
-static inline E164Type e164Type (E164 * theNumber);
-static inline E164CountryCode e164CountryCode (E164 * theNumber);
-static inline int countryCodeStringFromE164 (char * aString, E164 * aNumber);
-static inline int e164CountryCodeLength (E164 * aNumber);
+static inline E164Type e164Type (E164 theNumber);
+static inline E164CountryCode e164CountryCode (E164 theNumber);
+static inline int countryCodeStringFromE164 (char * aString, E164 aNumber);
+static inline int e164CountryCodeLength (E164 aNumber);
 static inline E164CountryCode e164CountryCodeFromInteger (int anInteger);
 static inline E164CountryCode e164CountryCodeFromString (char * aString);
 static int parseE164String (const char * aNumberString,
@@ -492,7 +492,7 @@ static inline bool hasValidLengthForE164Type (int numberLength,
                                               E164Type aType);
 static inline void initializeE164WithCountryCode (E164 * aNumber,
                                                   E164CountryCode * aCountryCode);
-static bool e164IsConsistent (E164 * aNumber);
+static bool e164IsConsistent (E164 aNumber);
 
 /*
  * unused, but perhaps useful as faster than converting country codes to text
@@ -508,7 +508,7 @@ static inline bool stringHasValidE164Prefix (const char * aString);
 
 static inline E164ParseResult e164FromString (E164 * aNumber, char * aString);
 static inline int stringFromE164 (char * aString,
-                                  E164 * aNumber,
+                                  E164 aNumber,
                                   int stringLength);
 static inline void e164Free (E164 * theNumber);
 
@@ -533,13 +533,13 @@ static inline E164Type e164TypeForCountryCode (E164CountryCode theCountryCode);
 /*
  * Comparison functions
  */
-static inline int e164Comparison (E164 * firstNumber, E164 * secondNumber);
-static inline bool e164IsEqualTo (E164 * firstNumber, E164 * secondNumber);
-static inline bool e164IsNotEqualTo (E164 * firstNumber, E164 * secondNumber);
-static inline bool e164IsLessThan (E164 * firstNumber, E164 * secondNumber);
-static inline bool e164IsLessThanOrEqualTo (E164 * firstNumber, E164 * secondNumber);
-static inline bool e164IsGreaterThanOrEqualTo (E164 * firstNumber, E164 * secondNumber);
-static inline bool e164IsGreaterThan (E164 * firstNumber, E164 * secondNumber);
+static inline int e164Comparison (E164 firstNumber, E164 secondNumber);
+static inline bool e164IsEqualTo (E164 firstNumber, E164 secondNumber);
+static inline bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber);
+static inline bool e164IsLessThan (E164 firstNumber, E164 secondNumber);
+static inline bool e164IsLessThanOrEqualTo (E164 firstNumber, E164 secondNumber);
+static inline bool e164IsGreaterThanOrEqualTo (E164 firstNumber, E164 secondNumber);
+static inline bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber);
 
 /*
  * Function definitions
@@ -558,6 +558,8 @@ E164 e164In (char * theString)
 #ifdef E164_BASE_CHECK
     exit(E164DebugSignalE164In);
 #endif
+
+    return 0;	/* keep compiler quiet */
 }
 /*
  * e164Out is the output function for the E164 type
@@ -568,7 +570,7 @@ char * e164Out (E164 aNumber)
     /* allocate space for the string + terminator */
     /* FIXME memory leak */
     char * theString = malloc(E164MaximumStringLength + 1);
-    stringFromE164(theString, &theNumber, E164MaximumStringLength);
+    stringFromE164(theString, theNumber, E164MaximumStringLength);
     return theString;
 }
 
@@ -582,45 +584,45 @@ void e164Free (E164 * theNumber)
 }
 
 static inline
-int e164Comparison (E164 * firstNumber, E164 * secondNumber)
+int e164Comparison (E164 firstNumber, E164 secondNumber)
 {
-    if ((*firstNumber & E164_NUMBER_AND_CC_LENGTH_MASK) <
-        (*secondNumber & E164_NUMBER_AND_CC_LENGTH_MASK))
+    if ((firstNumber & E164_NUMBER_AND_CC_LENGTH_MASK) <
+        (secondNumber & E164_NUMBER_AND_CC_LENGTH_MASK))
         return -1;
-    else if ((*firstNumber & E164_NUMBER_AND_CC_LENGTH_MASK) ==
-             (*secondNumber & E164_NUMBER_AND_CC_LENGTH_MASK))
+    else if ((firstNumber & E164_NUMBER_AND_CC_LENGTH_MASK) ==
+             (secondNumber & E164_NUMBER_AND_CC_LENGTH_MASK))
         return 0;
     else
         return 1;
 
 };
 static inline
-bool e164IsEqualTo (E164 * firstNumber, E164 * secondNumber)
+bool e164IsEqualTo (E164 firstNumber, E164 secondNumber)
 {
     return (0 == e164Comparison(firstNumber, secondNumber));
 };
 static inline
-bool e164IsNotEqualTo (E164 * firstNumber, E164 * secondNumber)
+bool e164IsNotEqualTo (E164 firstNumber, E164 secondNumber)
 {
     return (0 != e164Comparison(firstNumber, secondNumber));
 }
 static inline
-bool e164IsLessThan (E164 * firstNumber, E164 * secondNumber)
+bool e164IsLessThan (E164 firstNumber, E164 secondNumber)
 {
     return (0 > e164Comparison(firstNumber, secondNumber));
 }
 static inline
-bool e164IsLessThanOrEqualTo (E164 * firstNumber, E164 * secondNumber)
+bool e164IsLessThanOrEqualTo (E164 firstNumber, E164 secondNumber)
 {
     return (0 >= e164Comparison(firstNumber, secondNumber));
 }
 static inline
-bool e164IsGreaterThanOrEqualTo (E164 * firstNumber, E164 * secondNumber)
+bool e164IsGreaterThanOrEqualTo (E164 firstNumber, E164 secondNumber)
 {
     return (0 <= e164Comparison(firstNumber, secondNumber));
 }
 static inline
-bool e164IsGreaterThan (E164 * firstNumber, E164 * secondNumber)
+bool e164IsGreaterThan (E164 firstNumber, E164 secondNumber)
 {
     return (0 < e164Comparison(firstNumber, secondNumber));
 }
@@ -630,15 +632,15 @@ bool e164IsGreaterThan (E164 * firstNumber, E164 * secondNumber)
  * e164Type returns the E164Type of the E164 argument
  */
 static inline
-E164Type e164Type (E164 * theNumber)
+E164Type e164Type (E164 theNumber)
 {
-    if (*theNumber & E164_GEOGRAPHIC_AREA_MASK)
+    if (theNumber & E164_GEOGRAPHIC_AREA_MASK)
         return E164GeographicArea;
-    else if (*theNumber & E164_GLOBAL_SERVICE_MASK)
+    else if (theNumber & E164_GLOBAL_SERVICE_MASK)
         return E164GlobalService;
-    else if (*theNumber & E164_NETWORK_MASK)
+    else if (theNumber & E164_NETWORK_MASK)
         return E164Network;
-    else if (*theNumber & E164_GROUP_OF_COUNTRIES_MASK)
+    else if (theNumber & E164_GROUP_OF_COUNTRIES_MASK)
         return E164GroupOfCountries;
     else
     {
@@ -655,7 +657,7 @@ E164Type e164Type (E164 * theNumber)
  * e164CountryCode returns the E164CountryCode for the E164 argument
  */
 static inline
-E164CountryCode e164CountryCode (E164 * theNumber)
+E164CountryCode e164CountryCode (E164 theNumber)
 {
     E164CountryCode aCountryCode;
     char * aCountryCodeString = malloc(E164MaximumCountryCodeLength + 1);
@@ -671,10 +673,10 @@ E164CountryCode e164CountryCode (E164 * theNumber)
  * country code).
  */
 static inline
-int countryCodeStringFromE164 (char * aString, E164 * aNumber)
+int countryCodeStringFromE164 (char * aString, E164 aNumber)
 {
     return snprintf(aString, e164CountryCodeLength(aNumber) + 1,
-                    "%lld", (*aNumber & E164_NUMBER_MASK));
+                    "%lld", (aNumber & E164_NUMBER_MASK));
 }
 
 
@@ -682,9 +684,9 @@ int countryCodeStringFromE164 (char * aString, E164 * aNumber)
  * e164CountryCodeLength returns the length of the country code for an E164 number
  */
 static inline
-int e164CountryCodeLength (E164 * aNumber)
+int e164CountryCodeLength (E164 aNumber)
 {
-    return (int) ((*aNumber & E164_CC_LENGTH_MASK) >> E164_CC_LENGTH_OFFSET);
+    return (int) ((aNumber & E164_CC_LENGTH_MASK) >> E164_CC_LENGTH_OFFSET);
 }
 
 /*
@@ -742,10 +744,10 @@ E164CountryCode e164CountryCodeFromString (char * aString)
  * stringFromE164 assigns the string representation of aNumber to aString
  */
 static inline
-int stringFromE164 (char * aString, E164 * aNumber, int stringLength)
+int stringFromE164 (char * aString, E164 aNumber, int stringLength)
 {
     return snprintf(aString, stringLength,
-                    "+%lld", (*aNumber & E164_NUMBER_MASK));
+                    "+%lld", (aNumber & E164_NUMBER_MASK));
 }
 
 /*
@@ -1010,9 +1012,9 @@ void initializeE164WithCountryCode (E164 * aNumber,
 }
 
 static inline
-bool e164IsConsistent (E164 * aNumber)
+bool e164IsConsistent (E164 aNumber)
 {
-    return (*aNumber == e164In(e164Out(*aNumber)));
+    return (aNumber == e164In(e164Out(aNumber)));
 }
 
 /*

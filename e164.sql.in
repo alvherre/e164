@@ -40,12 +40,11 @@ LANGUAGE 'C' AS 'MODULE_PATHNAME';
 
 CREATE TYPE e164
 (
-    INTERNALLENGTH = 8
+    LIKE = int8
     , INPUT = e164_in
     , OUTPUT = e164_out
     , RECEIVE = e164_recv
     , SEND = e164_send
-    , ALIGNMENT = double
 );
 
 COMMENT ON TYPE e164 IS
